@@ -12,7 +12,7 @@ const BASE_URL = Platform.OS === "web"
   ? "http://localhost:5000"
   : "http://10.39.41.248:5000";
 
-const TWILIO_SANDBOX_NUMBER = "14155238886";
+const TWILIO_SANDBOX_NUMBER = "+14155238886";
 const TWILIO_JOIN_KEYWORD   = "join vertical-anybody";
 
 type UserType = {
