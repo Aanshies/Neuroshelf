@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "@/constants/colors";
 import Svg, { Circle } from "react-native-svg";
 
-const BASE_URL = "http://10.39.41.248:5000";
+const BASE_URL = "http://192.168.0.104:5000";
 
 /* ================= CIRCULAR SCORE COMPONENT ================= */
 
