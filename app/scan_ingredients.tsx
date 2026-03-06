@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "@/constants/colors";
 import Svg, { Circle } from "react-native-svg";
+import { useNavigation } from "@react-navigation/native";
 
 const BASE_URL = "http://10.39.41.248:5000";
 
@@ -94,7 +95,7 @@ export default function IngredientsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
-
+  const navigation = useNavigation();
   const categories = ["Food Product", "Cosmetic Product", "Other"];
 
   const analyzeImage = async (base64Image: string) => {
@@ -160,11 +161,27 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
     analyzeImage(photo.assets[0].base64!);
   };
 
+  const calculateSafetyScore = (harmfulIngredients: any[]) => {
+  if (!harmfulIngredients || harmfulIngredients.length === 0) return 10; // perfect score
+  let totalRisk = 0;
+  harmfulIngredients.forEach(item => {
+    if (!item.riskLevel) return;
+    const level = item.riskLevel.toLowerCase();
+    if (level.includes("high")) totalRisk += 3;
+    else if (level.includes("medium")) totalRisk += 2;
+    else totalRisk += 1;
+  });
+  const score = Math.max(0, 10 - totalRisk); // 10 is max score
+  return score;
+};
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.heading} />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+  <Ionicons name="arrow-back" size={24} color={COLORS.heading} />
+</TouchableOpacity>
         <Text style={styles.headerTitle}>Scan Product</Text>
       </View>
 
@@ -287,9 +304,10 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
   </Text>
 )}
     {/* SCORE */}
-    {scanResult.ingredients && scanResult.ingredients.length > 0 && (
-  <CircularScore score={scanResult.safetyScore} />
+{scanResult.harmfulIngredients && (
+  <CircularScore score={scanResult.safetyScore ?? calculateSafetyScore(scanResult.harmfulIngredients)} />
 )}
+
     {/* RISK SUMMARY */}
     <Text style={{
       textAlign: "center",

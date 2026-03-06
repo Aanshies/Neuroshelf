@@ -18,10 +18,15 @@ export default function LoginScreen() {
 
 // Check user before trying to log in
 const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert("Error", "Enter email and password");
-    return;
-  }
+  if (!email.trim() || !password.trim()) {
+  Alert.alert("Login Error", "Email and password are required");
+  return;
+}
+
+if (!email.includes("@")) {
+  Alert.alert("Login Error", "Enter a valid email");
+  return;
+}
 
   try {
     const res = await fetch("http://10.39.41.248:5000/api/login", {
@@ -30,31 +35,24 @@ const handleLogin = async () => {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+const data = await res.json();
 
-    if (!res.ok) {
-      Alert.alert(data.error || "Login failed");
-      return;
-    }
+if (!res.ok) {
+  Alert.alert("Login Failed", data.error || "Invalid email or password");
+  return;
+}
 
-    if (!data.user) {
-      Alert.alert("User not registered. Please sign up first.");
-      return;
-    }
+if (!data.user) {
+  Alert.alert("Login Failed", "User not found");
+  return;
+}
 
     // ✅ Save user in AsyncStorage
     await saveUser(data.user);
 
     // Now, let's fetch the products after login
-    const products = await getProducts();
-    //console.log("Products after login:", products); // Check what we get
+router.replace("/(tabs)/dashboard");
 
-    if (products.length === 0) {
-      Alert.alert("No products found.");
-    } else {
-      // Redirect to dashboard and pass products (if needed)
-      router.replace("/(tabs)/dashboard");
-    }
   } catch (err) {
     console.error(err);
     Alert.alert("Server error");

@@ -1,38 +1,57 @@
-// ================== IMPORTS ==================
-const express = require("express");
-const multer = require("multer");
-const vision = require("@google-cloud/vision");
-const sharp = require("sharp");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-require("dotenv").config();
-const ingredientRoutes = require("./routes/ingredientRoutes");
+import express from "express";
+import multer from "multer";
+import vision from "@google-cloud/vision";
+import sharp from "sharp";
+import fs from "fs";
+import path from "path";
+import cors from "cors";
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import ingredientRoutes from "./routes/ingredientRoutes.js";
+import whatsappRoutes from "./routes/whatsappRoutes.js";
+import { startScheduler } from "./utils/notificationScheduler.js";
+
+dotenv.config();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // ================== INIT APP ==================
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use("/api/ingredients", ingredientRoutes);
-
+app.use("/api/whatsapp",    whatsappRoutes); 
 // ================== MONGODB CONNECTION ==================
 const mongoURI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000; 
+
 mongoose.connect(mongoURI)
-  .then(() => console.log("🚀 Connected to MongoDB Atlas"))
+  .then(() => {
+    console.log("🚀 Connected to MongoDB Atlas");
+    startScheduler(); // Move this inside the .then block
+  })
   .catch(err => console.error("MongoDB connection error:", err));
+
 // ================== USER SCHEMA ==================
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  notificationPrefs: {                          // ✅ NEW
+    enabled: { type: Boolean, default: false }, // daily midnight WhatsApp on/off
+  },
 });
 
-const User = mongoose.model("User", userSchema);
+// ✅ Safe — won't throw OverwriteModelError
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
 
 // ================== GOOGLE VISION ==================
 const client = new vision.ImageAnnotatorClient({
@@ -208,7 +227,7 @@ app.post("/api/user", async (req, res) => {
     if (password.length < 8)
       return res.status(400).json({ error: "Password must be at least 8 characters" });
 
-    const existingEmail = await User.findOne({ email });
+    const existingEmail = await User.findOne({ email: email.trim().toLowerCase() });
     if (existingEmail) return res.status(400).json({ error: "Email already exists" });
 
     const existingPhone = await User.findOne({ phone });
@@ -216,8 +235,21 @@ app.post("/api/user", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({ name, email, phone, password: hashedPassword });
-    res.json({ message: "User created", user: { email: user.email, name: user.name, phone: user.phone } });
+    const user = await User.create({
+  name,
+  email: email.trim().toLowerCase(),
+  phone,
+  password: hashedPassword
+});
+    res.json({
+  message: "User Created",
+  user: {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone
+  }
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -230,13 +262,21 @@ app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email and password required" });
 
-    const user = await User.findOne({ email });
+   const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) return res.status(400).json({ error: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid email or password" });
 
-    res.json({ message: "Login successful", user: { email: user.email, name: user.name, phone: user.phone } });
+    res.json({
+  message: "Login successful",
+  user: {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone
+  }
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

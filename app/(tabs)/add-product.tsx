@@ -65,15 +65,18 @@ export default function AddProductScreen() {
       keyboardShouldPersistTaps="handled"
     >
               <View style={styles.header}>
-                <Ionicons
-                  name="arrow-back"
-                  size={24}
-                  color={COLORS.heading}
-                />
-                <Text style={styles.headerTitle}>
-                  Add Product
-                </Text>
-              </View>
+  <TouchableOpacity onPress={() => router.back()}>
+    <Ionicons
+      name="arrow-back"
+      size={24}
+      color={COLORS.heading}
+    />
+  </TouchableOpacity>
+
+  <Text style={styles.headerTitle}>
+    Add Product
+  </Text>
+</View>
        <View style={styles.card}>
       <Text style={styles.label}>Product Name</Text>
       <TextInput

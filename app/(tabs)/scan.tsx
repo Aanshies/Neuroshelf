@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { COLORS } from "@/constants/colors";
+import { router } from "expo-router";
 import {
   View,
   Text,
@@ -110,7 +111,7 @@ const handleAddProduct = async () => {
     id: Date.now().toString(),
     name: productName,
     category,
-    expiry: formatDate(expiryDate),
+    expiry: expiryDate.toISOString().split("T")[0],
     createdAt: new Date().toISOString(),
   };
 
@@ -120,16 +121,17 @@ const handleAddProduct = async () => {
     Alert.alert("Product Added Successfully");
 
     // reset form
-    setProductName("");
-    setExpiryDate(null);
-    setScanResult(null);
+  setProductName("");
+setExpiryDate(null);
+setScanResult(null);
+setCategory("General");
+
   } catch (error) {
     Alert.alert("Failed to save product");
   }
 };
 
-   // 👇 ADD THIS ABOVE return()
-const formatDate = (date: Date) => {
+const formatDisplayDate = (date: Date) => {
   return `${String(date.getDate()).padStart(2, "0")}-${String(
     date.getMonth() + 1
   ).padStart(2, "0")}-${date.getFullYear()}`;
@@ -139,16 +141,19 @@ const formatDate = (date: Date) => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         {/* HEADER */}
-        <View style={styles.header}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={COLORS.heading}
-          />
-          <Text style={styles.headerTitle}>
-            Scan Expiry Date
-          </Text>
-        </View>
+       <View style={styles.header}>
+  <TouchableOpacity onPress={() => router.back()}>
+    <Ionicons
+      name="arrow-back"
+      size={24}
+      color={COLORS.heading}
+    />
+  </TouchableOpacity>
+
+  <Text style={styles.headerTitle}>
+    Scan Expiry Date
+  </Text>
+</View>
 
         {/* SCAN BOX */}
         <TouchableOpacity
@@ -245,11 +250,7 @@ const formatDate = (date: Date) => {
   onPress={() => setShowDatePicker(true)}
 >
   <Text style={{ color: COLORS.heading }}>
-    {expiryDate
-      ? `${String(expiryDate.getDate()).padStart(2, "0")}-${String(
-          expiryDate.getMonth() + 1
-        ).padStart(2, "0")}-${expiryDate.getFullYear()}`
-      : "Select Date"}
+   {expiryDate ? formatDisplayDate(expiryDate) : "Select Date"}
   </Text>
 </TouchableOpacity>
 

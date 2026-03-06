@@ -38,6 +38,10 @@ yarn-error.*
 
 app-example
 
+# Environment / keys
+backend/.env
+backend/config/google-key.json
+
 # generated native folders
 /ios
 /android
