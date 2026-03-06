@@ -29,7 +29,7 @@ if (!email.includes("@")) {
 }
 
   try {
-    const res = await fetch("http://10.39.41.248:5000/api/login", {
+    const res = await fetch("http://192.168.0.104/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -95,7 +95,7 @@ router.replace("/(tabs)/dashboard");
 
         <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
           <Text style={styles.bottomText}>
-            Don't have an account? <Text style={styles.greenText}>Sign Up</Text>
+            Don&apos;t have an account? <Text style={styles.greenText}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
       </View>
