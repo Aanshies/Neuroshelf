@@ -1,9 +1,13 @@
-const express = require("express");
+import express from "express";
+import vision from "@google-cloud/vision";
+import path from "path";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+dotenv.config();
+
 const router = express.Router();
-const vision = require("@google-cloud/vision");
-const path = require("path");
-const fetch = global.fetch || require("node-fetch");
-require("dotenv").config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const client = new vision.ImageAnnotatorClient({
   keyFilename: path.join(__dirname, "../config/google-key.json"),
@@ -247,4 +251,4 @@ High-risk ingredients may require caution.
   }
 });
 
-module.exports = router;
+export default router;

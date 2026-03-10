@@ -29,7 +29,7 @@ if (!email.includes("@")) {
 }
 
   try {
-    const res = await fetch("http://192.168.0.104/api/login", {
+    const res = await fetch("http://10.161.11.248:5000/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

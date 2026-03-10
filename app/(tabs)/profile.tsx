@@ -10,16 +10,10 @@ import { router } from "expo-router";
 
 const BASE_URL = Platform.OS === "web"
   ? "http://localhost:5000"
-<<<<<<< HEAD
-  : "http://10.39.41.248:5000";
+  : "http://10.161.11.248:5000";
 
 const TWILIO_SANDBOX_NUMBER = "+14155238886";
-=======
-  : "http://192.168.0.104:5000";
-
-const TWILIO_SANDBOX_NUMBER = "14155238886";
->>>>>>> 325090827494c78c12030f2a6719ea33a25bb663
-const TWILIO_JOIN_KEYWORD   = "join vertical-anybody";
+const TWILIO_JOIN_KEYWORD = "join vertical-anybody";
 
 type UserType = {
   email:  string;
@@ -170,7 +164,6 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView contentContainerStyle={s.container}>
-<<<<<<< HEAD
 
       {/* ── Header ──────────────────────────────────────────── */}
      <View style={s.header}>
@@ -188,22 +181,6 @@ export default function ProfileScreen() {
       {/* ── Personal Info ────────────────────────────────────── */}
       <View style={s.card}>
         <Text style={s.sectionTitle}>Your Information</Text>
-
-=======
-
-      {/* ── Header ──────────────────────────────────────────── */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.heading} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Profile</Text>
-      </View>
-
-      {/* ── Personal Info ────────────────────────────────────── */}
-      <View style={s.card}>
-        <Text style={s.sectionTitle}>Your Information</Text>
-
->>>>>>> 325090827494c78c12030f2a6719ea33a25bb663
         <Text style={s.label}>Email</Text>
         <View style={s.disabledInput}>
           <Text style={s.disabledText}>{user.email}</Text>

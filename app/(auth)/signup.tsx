@@ -12,7 +12,7 @@ import { router } from "expo-router";
 import { saveUser } from "../../utils/storage";
 
 // ===== Directly define your backend URL here =====
-const API_BASE = "http://192.168.0.104:5000"; // replace with your PC LAN IP
+const API_BASE = "http://10.161.11.248:5000"; // replace with your PC LAN IP
 
 export default function SignupScreen() {
   const [name, setName] = useState("");

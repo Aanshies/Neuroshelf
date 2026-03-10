@@ -71,7 +71,7 @@ export default function ScanScreen() {
       setLoading(true);
 
       const response = await fetch(
-        "http://192.168.0.104/api/ocr", // 🔴 CHANGE IF NEEDED
+        "http://10.161.11.248:5000/api/ocr", // 🔴 CHANGE IF NEEDED
         {
           method: "POST",
           body: formData,
