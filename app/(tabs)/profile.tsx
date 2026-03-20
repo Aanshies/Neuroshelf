@@ -7,10 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/colors";
 import { getUser, saveUser } from "../../utils/storage";
 import { router } from "expo-router";
-
-const BASE_URL = Platform.OS === "web"
-  ? "http://localhost:5000"
-  : "http://10.161.11.248:5000";
+import { BASE_URL } from "../../config/api";
 
 const TWILIO_SANDBOX_NUMBER = "+14155238886";
 const TWILIO_JOIN_KEYWORD = "join vertical-anybody";

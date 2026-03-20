@@ -10,9 +10,8 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { saveUser } from "../../utils/storage";
+import { BASE_URL } from "../../config/api";
 
-// ===== Directly define your backend URL here =====
-const API_BASE = "http://10.161.11.248:5000"; // replace with your PC LAN IP
 
 export default function SignupScreen() {
   const [name, setName] = useState("");
@@ -37,7 +36,7 @@ export default function SignupScreen() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/user`, {
+      const res = await fetch(`${BASE_URL}/api/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone, password }),

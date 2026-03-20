@@ -12,6 +12,7 @@ import {
 import { router } from "expo-router";
 import { saveUser } from "../../utils/storage";
 import { getProducts } from "../../utils/productStorage";
+import { BASE_URL } from "../../config/api";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +30,7 @@ if (!email.includes("@")) {
 }
 
   try {
-    const res = await fetch("http://10.161.11.248:5000/api/login", {
+    const res = await fetch(`${BASE_URL}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

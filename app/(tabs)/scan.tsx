@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { BASE_URL } from "../../config/api";
 
 interface ScanResponse {
   status?: string;
@@ -70,8 +71,7 @@ export default function ScanScreen() {
 
       setLoading(true);
 
-      const response = await fetch(
-        "http://10.161.11.248:5000/api/ocr", // 🔴 CHANGE IF NEEDED
+      const response = await fetch(`${BASE_URL}/api/ocr`,  // 🔴 CHANGE IF NEEDED
         {
           method: "POST",
           body: formData,

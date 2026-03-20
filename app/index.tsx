@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { deactivateKeepAwake } from "expo-keep-awake";
 import {
   View,
   Text,
@@ -15,9 +14,7 @@ const { height } = Dimensions.get("window");
 
 
 export default function Index() {
-  useEffect(() => {
-  deactivateKeepAwake();
-}, []);
+  
   return (
     <View style={styles.container}>
       {/* TOP GREEN SECTION */}

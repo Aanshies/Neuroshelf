@@ -3,15 +3,20 @@ import vision from "@google-cloud/vision";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import { Translate } from "@google-cloud/translate/build/src/v2/index.js";
 dotenv.config();
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+const analysisCache = new Map();
 const client = new vision.ImageAnnotatorClient({
   keyFilename: path.join(__dirname, "../config/google-key.json"),
 });
+const translate = new Translate({
+  keyFilename: path.join(__dirname, "../config/google-key.json"),
+});
+
 
 /* ================= CORE DATABASE ================= */
 
@@ -70,7 +75,8 @@ function calculateRiskSummary(score) {
 
 router.post("/analyze", async (req, res) => {
   try {
-    const { image, ingredientsText, category } = req.body;
+    const { image, ingredientsText, category, language } = req.body;
+console.log("🌐 Selected Language:", language);
 
 if (!image && !ingredientsText) {
   return res.status(400).json({ error: "Image or ingredients text required" });
@@ -96,15 +102,30 @@ if (image) {
     console.log("\n===== CLEANED TEXT =====");
     console.log(cleanedText);
 
-    const ingredientList = cleanedText
-      .split(/,|\n|;/)
-      .map(i => i.trim())
-      .filter(i =>
-        i.length > 2 &&
-        !i.includes("CONTAINS") &&
-        !i.includes("MAY CONTAIN") &&
-        /^[A-Z\s()\-]+$/.test(i) 
-      );
+    
+   const ingredientList = cleanedText
+  .split(/,|\n|;/)
+  .map(i => i.trim().toUpperCase())
+  .filter(i =>
+    i.length > 2 &&
+    !i.includes("CONTAINS") &&
+    !i.includes("MAY CONTAIN")
+  )
+  .map(i =>
+    i
+      .replace(/[^A-Z\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+
+// ✅ NOW create cache key AFTER list is ready
+const cacheKey = ingredientList.sort().join(",");
+
+// ✅ NOW check cache
+if (analysisCache.has(cacheKey)) {
+  console.log("⚡ Using cached analysis");
+  return res.json(analysisCache.get(cacheKey));
+}
 
     console.log("\n===== FINAL INGREDIENT ARRAY =====");
     console.log(ingredientList);
@@ -144,12 +165,30 @@ if (image) {
                 Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
               },
               body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
-                messages: [
+  model: "llama-3.1-8b-instant",
+  temperature: 0,
+  top_p: 0,
+  messages: [
                   {
                     role: "user",
-                    content: `Is "${upperIng}" harmful in ${category || "food"}?
-Reply ONLY in JSON:
+                    content: `You are a strict food safety classifier.
+
+Ingredient: "${upperIng}"
+
+Classify risk ONLY as one of:
+Low, Moderate, High
+
+Rules:
+- Be consistent across calls
+- Do NOT vary answers
+- Same ingredient must ALWAYS return same risk
+
+STRICT RULES:
+- Always classify the same ingredient the same way
+- Never change previous decisions
+- Be consistent across all calls
+
+Return ONLY JSON:
 {
 "risk":"Low/Moderate/High",
 "reason":"short explanation"
@@ -211,12 +250,7 @@ Reply ONLY in JSON:
     const safetyScore = calculateScore(allAnalyzedIngredients);
     const riskSummary = calculateRiskSummary(safetyScore);
 
-    /* ===== Harmful (Moderate + High) ===== */
-
-    const harmfulIngredients = allAnalyzedIngredients.filter(i =>
-      i.riskLevel.toUpperCase().includes("HIGH") ||
-      i.riskLevel.toUpperCase().includes("MODERATE")
-    );
+    
 
     /* ===== Overall Explanation ===== */
 
@@ -225,30 +259,81 @@ This product contains ${highCount} high-risk and ${moderateCount} moderate-risk 
 Moderate ingredients should be consumed occasionally.
 High-risk ingredients may require caution.
 `;
+let translatedExplanation = overallExplanation;
+let translatedIngredients = allAnalyzedIngredients;
 
-    /* ===== FINAL RESPONSE ===== */
+if (language && language !== "English") {
+  try {
+    console.log("🌍 Translating using Google:", language);
 
-    res.json({
-      rawText,
-      cleanedText,
-      allAnalyzedIngredients,
-      harmfulIngredients,
-      safetyScore,
-      riskSummary,
-      riskBreakdown: {
-        high: highCount,
-        moderate: moderateCount,
-        low: lowCount
-      },
-      overallExplanation,
-      healthAlert: highCount > 0,
-      caution: "Smart ingredient safety evaluation completed."
-    });
+    const langMap = {
+      Hindi: "hi",
+      Telugu: "te",
+      Tamil: "ta",
+      Kannada: "kn",
+      English: "en"
+    };
 
-  } catch (error) {
-    console.error("SERVER ERROR:", error);
-    res.status(500).json({ error: "Analysis failed" });
+    const targetLang = langMap[language] || "en";
+
+    // Translate ingredients
+    translatedIngredients = await Promise.all(
+      allAnalyzedIngredients.map(async (item) => {
+        const [name] = await translate.translate(item.name, targetLang);
+        const [reason] = await translate.translate(item.shortReason, targetLang);
+
+        return {
+  ...item,
+  name,
+  shortReason: reason,
+  detailedReason: reason,
+  riskLevel: item.riskLevel // 🔥 keep riskLevel for harmfulIngredients filtering
+};
+      })
+    );
+
+    // Translate summary
+    const [translatedSummary] = await translate.translate(overallExplanation, targetLang);
+
+    translatedExplanation = translatedSummary;
+
+  } catch (err) {
+    console.log("❌ Translation error:", err.message);
   }
+}
+
+
+    /* ===== Harmful (Moderate + High) ===== */
+ 
+    
+    const harmfulIngredients = translatedIngredients.filter(i =>
+  i.riskLevel.toUpperCase().includes("HIGH") ||
+  i.riskLevel.toUpperCase().includes("MODERATE")
+);
+
+/* ===== FINAL RESPONSE ===== */
+const finalResponse = {
+  rawText,
+  cleanedText,
+  allAnalyzedIngredients: translatedIngredients, // full list
+  harmfulIngredients, // filtered HIGH + MODERATE
+  safetyScore,
+  riskSummary,
+  riskBreakdown: { high: highCount, moderate: moderateCount, low: lowCount },
+  overallExplanation,
+  translatedExplanation,
+  healthAlert: highCount > 0,
+  caution: "Smart ingredient safety evaluation completed."
+};
+
+analysisCache.set(cacheKey, finalResponse);
+
+res.json(finalResponse);
+
+} catch (error) {
+  console.error("SERVER ERROR:", error);
+  res.status(500).json({ error: "Analysis failed" });
+}
 });
 
 export default router;

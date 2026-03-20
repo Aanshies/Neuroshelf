@@ -16,8 +16,9 @@ import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "@/constants/colors";
 import Svg, { Circle } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
+import { BASE_URL } from "../../config/api";
+import * as Speech from "expo-speech";
 
-const BASE_URL = "http://10.161.11.248:5000";
 
 /* ================= CIRCULAR SCORE COMPONENT ================= */
 
@@ -96,8 +97,22 @@ export default function IngredientsScreen() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const navigation = useNavigation();
+  const [modalType, setModalType] = useState<"language" | "category" | null>(null);
   const categories = ["Food Product", "Cosmetic Product", "Other"];
-
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const languages = [
+  "English",
+  "Hindi",
+  "Telugu",
+  "Tamil",
+  "Kannada",
+  "Malayalam",
+  "Bengali",
+  "Marathi",
+  "Gujarati",
+  "Punjabi",
+  "Urdu"
+];
   const analyzeImage = async (base64Image: string) => {
     setLoading(true);
     setScanResult(null);
@@ -110,7 +125,8 @@ if (scanMode === "ingredients") {
   endpoint = "/api/ingredients/analyze";
   bodyData = {
     image: base64Image,
-    category: selectedCategory,
+    category: selectedCategory.toLowerCase().includes("cosmetic") ? "cosmetic" : "food",
+    language: selectedLanguage,
   };
 }
 
@@ -118,16 +134,19 @@ if (scanMode === "barcode") {
   endpoint = "/api/barcode/analyze";
   bodyData = {
     image: base64Image,
+    language: selectedLanguage, // ✅ ADD THIS
   };
 }
 
 if (scanMode === "productName") {
   endpoint = "/api/product-name/analyze";
   bodyData = {
-    image: base64Image, // let backend extract name using OCR
+    image: base64Image,
+    category: selectedCategory.toLowerCase().includes("cosmetic") ? "cosmetic" : "food",
+    language: selectedLanguage,
   };
 }
-
+console.log("LANG SENT:", selectedLanguage);
 const response = await fetch(`${BASE_URL}${endpoint}`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -175,6 +194,146 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
   return score;
 };
 
+const speakText = async () => {
+  if (!scanResult) {
+    Alert.alert("No data to speak");
+    return;
+  }
+
+  Speech.stop(); // Stop any ongoing speech
+  setSpeaking(false);
+
+  // Build the text to speak
+  const fullText = scanResult.harmfulIngredients?.length
+    ? scanResult.harmfulIngredients
+        .map((item: any) => {
+          const template = speechTemplates[selectedLanguage] || speechTemplates["English"];
+          return template(item);
+        })
+        .join(". ") + "."
+    : "No harmful ingredients detected.";
+
+  if (!fullText.trim()) {
+    Alert.alert("No text to speak");
+    return;
+  }
+
+  // Map languages to TTS codes
+  const langMap: Record<string, string> = {
+    English: "en-US",
+    Hindi: "hi-IN",
+    Telugu: "te-IN",
+    Tamil: "ta-IN",
+    Kannada: "kn-IN",
+    Malayalam: "ml-IN",
+    Bengali: "bn-IN",
+    Marathi: "mr-IN",
+    Gujarati: "gu-IN",
+    Punjabi: "pa-IN",
+    Urdu: "ur-IN",
+  };
+
+  let finalLang = "en-US"; // Default fallback
+
+  try {
+    // Try to get device voices
+    const voices = await Speech.getAvailableVoicesAsync();
+    const selectedLangCode = langMap[selectedLanguage] || "en-US";
+
+    const isSupported = voices.some((v) =>
+      v.language.toLowerCase().includes(selectedLangCode.split("-")[0])
+    );
+
+    finalLang = isSupported ? selectedLangCode : "en-US";
+  } catch (err) {
+    console.warn("Failed to get voices, defaulting to English.", err);
+    finalLang = "en-US";
+  }
+
+  try {
+    setSpeaking(true);
+    Speech.speak(fullText, {
+      language: finalLang,
+      rate: 0.85,
+      pitch: 1,
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+      onError: (error) => {
+        console.error("TTS failed:", error);
+        Alert.alert("Speech Error", "Text-to-speech failed. Using English fallback.");
+        setSpeaking(false);
+      },
+    });
+  } catch (err) {
+    console.error("Speech.speak failed:", err);
+    Alert.alert("Speech Error", "Unable to play text-to-speech.");
+    setSpeaking(false);
+  }
+};
+
+
+const stopSpeech = () => {
+  Speech.stop();
+  setSpeaking(false);
+};
+
+const [speaking, setSpeaking] = useState(false);
+
+const score = scanResult
+  ? scanResult.safetyScore ??
+    calculateSafetyScore(scanResult.harmfulIngredients)
+  : 0;
+
+const isSafe = score >= 7;
+const langKey = selectedLanguage as keyof typeof labels;
+const labels = {
+  English: { safe: "SAFE ✅", unsafe: "UNSAFE ⚠️" },
+  Hindi: { safe: "सुरक्षित ✅", unsafe: "असुरक्षित ⚠️" },
+  Telugu: { safe: "సురక్షితం ✅", unsafe: "అసురక్షితం ⚠️" },
+  Tamil: { safe: "பாதுகாப்பானது ✅", unsafe: "பாதுகாப்பற்றது ⚠️" },
+  Kannada: { safe: "ಸುರಕ್ಷಿತ ✅", unsafe: "ಅಸುರಕ್ಷಿತ ⚠️" },
+  Malayalam: { safe: "സുരക്ഷിതം ✅", unsafe: "അസുരക്ഷിതം ⚠️" },
+  Bengali: { safe: "নিরাপদ ✅", unsafe: "অনিরাপদ ⚠️" },
+  Marathi: { safe: "सुरक्षित ✅", unsafe: "असुरक्षित ⚠️" },
+  Gujarati: { safe: "સુરક્ષિત ✅", unsafe: "અસુરક્ષિત ⚠️" },
+  Punjabi: { safe: "ਸੁਰੱਖਿਅਤ ✅", unsafe: "ਅਸੁਰੱਖਿਅਤ ⚠️" },
+  Urdu: { safe: "محفوظ ✅", unsafe: "غیر محفوظ ⚠️" },
+};
+
+const riskLabels: Record<string, Record<string, string>> = {
+  English: { high: "High", medium: "Medium", low: "Low", risk: "risk because" },
+  Hindi: { high: "उच्च", medium: "मध्यम", low: "कम", risk: "जोखिम है क्योंकि" },
+  Telugu: { high: "ఎక్కువ", medium: "మధ్యస్థ", low: "తక్కువ", risk: "రిస్క్ ఎందుకంటే" },
+  Tamil: { high: "உயர்", medium: "மதியம்", low: "குறைவு", risk: "அபாயம் ஏன் என்று" },
+  Kannada: { high: "ಹೆಚ್ಚು", medium: "ಮಧ್ಯಮ", low: "ಕಡಿಮೆ", risk: "ಪರಿಹಾರ ಕಾರಣ" },
+  Malayalam: { high: "ഉയർന്നത്", medium: "മധ്യമം", low: "കുറവ്", risk: "റിസ്‌ക് കാരണം" },
+  Bengali: { high: "উচ্চ", medium: "মধ্যম", low: "কম", risk: "ঝুঁকি কারণ" },
+  Marathi: { high: "उच्च", medium: "मध्यम", low: "कमी", risk: "जोखमीचे कारण" },
+  Gujarati: { high: "ઉચ્ચ", medium: "મધ્યમ", low: "નીચું", risk: "ખતરો કારણ" },
+  Punjabi: { high: "ਉੱਚ", medium: "ਮੱਧਮ", low: "ਘੱਟ", risk: "ਖਤਰਾ ਕਿਉਂ" },
+  Urdu: { high: "زیادہ", medium: "درمیانہ", low: "کم", risk: "خطرہ کیونکہ" },
+};
+const speechTemplates: Record<string, (item: any) => string> = {
+  English: (item) => `${item.name} is ${riskLabels["English"][normalizeRiskLevel(item.riskLevel)]} risk because ${item.shortReason}`,
+  Hindi: (item) => `${item.name} ${riskLabels["Hindi"][normalizeRiskLevel(item.riskLevel)]} जोखिम है क्योंकि ${item.shortReason}`,
+  Telugu: (item) => `${item.name} ${riskLabels["Telugu"][normalizeRiskLevel(item.riskLevel)]} రిస్క్ ఎందుకంటే ${item.shortReason}`,
+  Tamil: (item) => `${item.name} ${riskLabels["Tamil"][normalizeRiskLevel(item.riskLevel)]} அபாயம் ஏன் என்று ${item.shortReason}`,
+  Kannada: (item) => `${item.name} ${riskLabels["Kannada"][normalizeRiskLevel(item.riskLevel)]} ಅಪಾಯ ಕಾರಣ ${item.shortReason}`,
+  Malayalam: (item) => `${item.name} ${riskLabels["Malayalam"][normalizeRiskLevel(item.riskLevel)]} റിസ്‌ക് കാരണം ${item.shortReason}`,
+  Bengali: (item) => `${item.name} ${riskLabels["Bengali"][normalizeRiskLevel(item.riskLevel)]} ঝুঁকি কারণ ${item.shortReason}`,
+  Marathi: (item) => `${item.name} ${riskLabels["Marathi"][normalizeRiskLevel(item.riskLevel)]} जोखमीचे कारण ${item.shortReason}`,
+  Gujarati: (item) => `${item.name} ${riskLabels["Gujarati"][normalizeRiskLevel(item.riskLevel)]} ખતરો કારણ ${item.shortReason}`,
+  Punjabi: (item) => `${item.name} ${riskLabels["Punjabi"][normalizeRiskLevel(item.riskLevel)]} ਖਤਰਾ ਕਿਉਂ ${item.shortReason}`,
+  Urdu: (item) => `${item.name} ${riskLabels["Urdu"][normalizeRiskLevel(item.riskLevel)]} خطرہ کیونکہ ${item.shortReason}`,
+};
+const normalizeRiskLevel = (level: string) => {
+  if (!level) return "";
+  const l = level.toLowerCase();
+  if (l.includes("high")) return "high";
+  if (l.includes("medium") || l.includes("moderate")) return "medium";
+  if (l.includes("low")) return "low";
+  return l; // fallback
+};
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
@@ -235,11 +394,30 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
 
       <View style={styles.card}>
         <Text style={styles.label}>Product Category</Text>
+        <Text style={styles.label}>Select Language</Text>
+
+<TouchableOpacity
+  style={styles.dropdown}
+  onPress={() => {
+    setModalType("language");
+    setModalVisible(true);
+  }}
+>
+  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <Ionicons name="globe-outline" size={18} color={COLORS.darkGreen} />
+    <Text style={styles.dropdownText}>{selectedLanguage}</Text>
+  </View>
+
+  <Ionicons name="chevron-down" size={18} color={COLORS.darkGreen} />
+</TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.dropdown}
-          onPress={() => setModalVisible(true)}
-        >
+  style={styles.dropdown}
+  onPress={() => {
+    setModalType("category");
+    setModalVisible(true);
+  }}
+>
           <Text style={styles.dropdownText}>{selectedCategory}</Text>
           <Ionicons name="chevron-down" size={18} color={COLORS.darkGreen} />
         </TouchableOpacity>
@@ -250,8 +428,11 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="large" color={COLORS.darkGreen} />
-          ) : (
+  <>
+    <ActivityIndicator size="large" color={COLORS.darkGreen} />
+    <Text style={{ marginTop: 10 }}>Analyzing...</Text>
+  </>
+) : (
             <>
               <Ionicons
   name={
@@ -275,6 +456,7 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
           )}
         </TouchableOpacity>
       </View>
+
 
       {/* RESULT SECTION */}
 {scanResult && (
@@ -300,13 +482,31 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
     marginBottom: 15,
     color: "#555"
   }}>
-    {scanResult.ingredients}
+    {scanResult.translatedIngredients || scanResult.ingredients}
   </Text>
 )}
     {/* SCORE */}
 {scanResult.harmfulIngredients && (
   <CircularScore score={scanResult.safetyScore ?? calculateSafetyScore(scanResult.harmfulIngredients)} />
 )}
+
+<View
+  style={{
+    alignSelf: "center",
+    backgroundColor: isSafe ? "#4CAF50" : "#E53935",
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 10,
+  }}
+>
+  <Text style={{ color: "#fff", fontWeight: "700" }}>
+  {isSafe
+    ? (labels[langKey]?.safe || "SAFE ✅")
+    : (labels[langKey]?.unsafe || "UNSAFE ⚠️")}
+</Text>
+  
+</View>
 
     {/* RISK SUMMARY */}
     <Text style={{
@@ -324,9 +524,9 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
     scanResult.harmfulIngredients.map((item: any, index: number) => {
 
       const riskColor =
-        item.riskLevel?.toUpperCase().includes("HIGH")
-          ? "#E53935"
-          : "#FB8C00";
+  normalizeRiskLevel(item.riskLevel) === "high" ? "#E53935" :
+  normalizeRiskLevel(item.riskLevel) === "medium" ? "#FB8C00" :
+  "#4CAF50"; // green for low
 
       return (
         <View key={index} style={styles.ingredientCard}>
@@ -340,8 +540,8 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
               { backgroundColor: riskColor }
             ]}>
               <Text style={styles.riskText}>
-                {item.riskLevel}
-              </Text>
+  {riskLabels[selectedLanguage]?.[normalizeRiskLevel(item.riskLevel)] || item.riskLevel}
+</Text>
             </View>
           </View>
 
@@ -364,10 +564,38 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
 
     {/* OVERALL EXPLANATION */}
     <Text style={styles.caution}>
-      {scanResult.overallExplanation}
+  {scanResult.translatedExplanation || scanResult.overallExplanation}
+</Text>
+<View style={{ flexDirection: "row", gap: 10, marginTop: 15 }}>
+   
+   
+  <TouchableOpacity
+    onPress={speakText}
+    style={styles.listenBtn}
+  >
+    <Ionicons name="volume-high-outline" size={18} color="#fff" />
+    <Text style={styles.listenText}>
+      {speaking ? "Speaking..." : "Listen"}
     </Text>
+  </TouchableOpacity>
+
+  {speaking && (
+    <TouchableOpacity
+      onPress={stopSpeech}
+      style={styles.stopBtn}
+    >
+      <Ionicons name="stop-circle-outline" size={18} color="#fff" />
+      <Text style={styles.listenText}>Stop</Text>
+    </TouchableOpacity>
+  )}
+  
+
+</View>
+
 
   </View>
+
+  
 )}
 
       {/* MODAL */}
@@ -377,17 +605,34 @@ const response = await fetch(`${BASE_URL}${endpoint}`, {
           onPress={() => setModalVisible(false)}
         >
           <View style={styles.modalContent}>
-            {categories.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => {
-                  setSelectedCategory(cat);
-                  setModalVisible(false);
-                }}
-              >
-                <Text style={styles.modalItem}>{cat}</Text>
-              </TouchableOpacity>
-            ))}
+            {modalType === "language" &&
+  languages.map((lang) => (
+    <TouchableOpacity
+      key={lang}
+      onPress={() => {
+        setSelectedLanguage(lang);
+        setModalVisible(false);
+      }}
+    >
+      <Text style={styles.modalItem}>{lang}</Text>
+    </TouchableOpacity>
+  ))
+}
+
+{modalType === "category" &&
+  categories.map((cat) => (
+    <TouchableOpacity
+      key={cat}
+      onPress={() => {
+        setSelectedCategory(cat);
+        setModalVisible(false);
+      }}
+    >
+      <Text style={styles.modalItem}>{cat}</Text>
+    </TouchableOpacity>
+  ))
+}
+              
           </View>
         </TouchableOpacity>
       </Modal>
@@ -559,5 +804,31 @@ caution: {
   fontSize: 14,
   textAlign: "center",
   color: COLORS.heading,
+},
+listenBtn: {
+  flex: 1,
+  backgroundColor: COLORS.darkGreen,
+  padding: 12,
+  borderRadius: 12,
+  flexDirection: "row",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 8,
+},
+
+stopBtn: {
+  flex: 1,
+  backgroundColor: "#E53935",
+  padding: 12,
+  borderRadius: 12,
+  flexDirection: "row",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 8,
+},
+
+listenText: {
+  color: "#fff",
+  fontWeight: "600",
 },
 });
