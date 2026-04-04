@@ -14,8 +14,14 @@ import { fileURLToPath } from "url";
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
+import fs from "fs";
 
 dotenv.config();
+
+if (process.env.GOOGLE_KEY_JSON) {
+  fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
+}
 
 
 const __filename = fileURLToPath(import.meta.url);

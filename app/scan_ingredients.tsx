@@ -569,7 +569,7 @@ const normalizeRiskLevel = (level: string) => {
 <View style={{ flexDirection: "row", gap: 10, marginTop: 15 }}>
    
    
-  <TouchableOpacity
+  {/* <TouchableOpacity
     onPress={speakText}
     style={styles.listenBtn}
   >
@@ -577,9 +577,9 @@ const normalizeRiskLevel = (level: string) => {
     <Text style={styles.listenText}>
       {speaking ? "Speaking..." : "Listen"}
     </Text>
-  </TouchableOpacity>
+  </TouchableOpacity> */}
 
-  {speaking && (
+  {/* {speaking && (
     <TouchableOpacity
       onPress={stopSpeech}
       style={styles.stopBtn}
@@ -587,7 +587,7 @@ const normalizeRiskLevel = (level: string) => {
       <Ionicons name="stop-circle-outline" size={18} color="#fff" />
       <Text style={styles.listenText}>Stop</Text>
     </TouchableOpacity>
-  )}
+  )} */}
   
 
 </View>
