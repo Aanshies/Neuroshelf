@@ -326,7 +326,7 @@ app.post("/api/barcode/analyze", async (req, res) => {
 
     // 🔥 CALL INGREDIENT ANALYSIS
     const aiResponse = await fetch(
-      "http://localhost:5000/api/ingredients/analyze",
+      `${process.env.BASE_URL}/api/ingredients/analyze`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -527,7 +527,7 @@ if (!ingredients) {
     }
     // ================== INGREDIENT ANALYSIS ==================
     const analysisRes = await fetch(
-      "http://localhost:5000/api/ingredients/analyze",
+      `${process.env.BASE_URL}/api/ingredients/analyze`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -555,7 +555,20 @@ if (!ingredients) {
   }
 });
 
+// ================== ROOT ROUTE ==================
+app.get('/', (req, res) => {
+  res.send('Neuroshelf API is running 🚀');
+});
+
 // ================== START SERVER ==================
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// ================== START SERVER ==================
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+
+
