@@ -14,7 +14,7 @@ import { fileURLToPath } from "url";
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
-import fs from "fs";
+
 
 dotenv.config();
 
