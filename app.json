@@ -25,6 +25,12 @@
     "plugins": [
       "expo-video",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3f80a955-59b7-4131-95b5-d6f1a7767f33"
+      }
+    },
+    "owner": "ankithpissay"
   }
 }
