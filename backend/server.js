@@ -18,10 +18,10 @@ import { startScheduler } from "./utils/notificationScheduler.js";
 
 dotenv.config();
 
-if (process.env.GOOGLE_KEY_JSON) {
-  fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
-}
+// if (process.env.GOOGLE_KEY_JSON) {
+//   fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
+//   process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
+// }
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -555,20 +555,12 @@ if (!ingredients) {
   }
 });
 
-// ================== ROOT ROUTE ==================
-app.get('/', (req, res) => {
-  res.send('Neuroshelf API is running 🚀');
-});
 
 // ================== START SERVER ==================
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// ================== START SERVER ==================
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
 
 
 
