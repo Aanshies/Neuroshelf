@@ -14,14 +14,16 @@ import { fileURLToPath } from "url";
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
-import { Translate } from "@google-cloud/translate";
+import pkg from "@google-cloud/translate";
+const { Translate } = pkg;
 
+const translate = new Translate();
 
 dotenv.config();
 
 if (process.env.GOOGLE_KEY_JSON) {
-  fs.writeFileSync("/backend/config/google-key.json", process.env.GOOGLE_KEY_JSON);
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = "/backend/cofig/google-key.json";
+  fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
 }
 
 
@@ -254,7 +256,6 @@ app.put("/api/user/:email", async (req, res) => {
   }
 });
 
-const translate = new Translate();
 
 // ================== BARCODE ANALYZER ==================
 app.post("/api/barcode/analyze", async (req, res) => {

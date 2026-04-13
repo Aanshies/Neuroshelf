@@ -3,19 +3,21 @@ import vision from "@google-cloud/vision";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import { Translate } from "@google-cloud/translate/build/src/v2/index.js";
+
+import vision from "@google-cloud/vision";
+import pkg from "@google-cloud/translate";
+
+const { Translate } = pkg;
+
+const client = new vision.ImageAnnotatorClient();
+const translate = new Translate();
 dotenv.config();
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const analysisCache = new Map();
-const client = new vision.ImageAnnotatorClient({
-  keyFilename: path.join(__dirname, "../config/google-key.json"),
-});
-const translate = new Translate({
-  keyFilename: path.join(__dirname, "../config/google-key.json"),
-});
+
 
 
 /* ================= CORE DATABASE ================= */
