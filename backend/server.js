@@ -18,10 +18,10 @@ import { startScheduler } from "./utils/notificationScheduler.js";
 
 dotenv.config();
 
-// if (process.env.GOOGLE_KEY_JSON) {
-//   fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
-//   process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
-// }
+if (process.env.GOOGLE_KEY_JSON) {
+  fs.writeFileSync("/tmp/google-key.json", process.env.GOOGLE_KEY_JSON);
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
+}
 
 
 const __filename = fileURLToPath(import.meta.url);
