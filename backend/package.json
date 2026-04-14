@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
@@ -19,17 +19,13 @@
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
-    "expo-image-picker": "~17.0.10",
     "express": "^5.2.1",
-    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
-    "path": "^0.12.7",
     "sharp": "^0.34.5",
-    "tesseract.js": "^7.0.0",
     "twilio": "^5.12.2"
   },
   "devDependencies": {
