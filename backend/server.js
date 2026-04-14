@@ -11,11 +11,6 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 
-import ingredientRoutes from "./routes/ingredientRoutes.js";
-import whatsappRoutes from "./routes/whatsappRoutes.js";
-import { startScheduler } from "./utils/notificationScheduler.js";
-
-
 dotenv.config();
 
 if (process.env.GOOGLE_KEY_JSON) {
@@ -23,6 +18,9 @@ if (process.env.GOOGLE_KEY_JSON) {
   process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/google-key.json";
 }
 
+import ingredientRoutes from "./routes/ingredientRoutes.js";
+import whatsappRoutes from "./routes/whatsappRoutes.js";
+import { startScheduler } from "./utils/notificationScheduler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,9 +61,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 // ================== GOOGLE VISION ==================
-const client = new vision.ImageAnnotatorClient({
-  keyFilename: path.join(__dirname, "config/google-key.json"),
-});
+const client = new vision.ImageAnnotatorClient();
 
 // ================== UPLOAD SETUP ==================
 const uploadDir = path.join(__dirname, "uploads");
