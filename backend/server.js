@@ -14,10 +14,7 @@ import { fileURLToPath } from "url";
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
-import pkg from "@google-cloud/translate";
-const { Translate } = pkg;
 
-const translate = new Translate();
 
 dotenv.config();
 
