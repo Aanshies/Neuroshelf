@@ -12,9 +12,7 @@ const __dirname = path.dirname(__filename);
 const analysisCache = new Map();
 
 // Vision client — uses google-key.json via env var GOOGLE_APPLICATION_CREDENTIALS
-const client = new vision.ImageAnnotatorClient({
-  keyFilename: path.join(__dirname, "../config/google-key.json"),
-});
+const client = new vision.ImageAnnotatorClient();
 
 /* ================= CORE DATABASE ================= */
 const coreDB = [
