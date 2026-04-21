@@ -24,4 +24,4 @@ router.get("/", async (req, res) => {
   res.json(products);
 });
 
-module.exports = router;
+export default router;
