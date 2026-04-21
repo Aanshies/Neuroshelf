@@ -13,7 +13,8 @@ import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { notifyIfExpiring } from "../../components/ExpiryBadge";
-import { saveProduct } from "../../utils/productStorage";
+import { getUser } from "../../utils/storage";
+import { BASE_URL } from "../../config/api";
 import { COLORS } from "@/constants/colors";
 import { Ionicons } from "@expo/vector-icons"; 
 
@@ -49,7 +50,18 @@ export default function AddProductScreen() {
     createdAt: new Date().toISOString(),
   };
 
-  await saveProduct(newProduct);
+ const user = await getUser();
+
+await fetch(`${BASE_URL}/api/products`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name,
+    category,
+    expiryDate: expiry.toISOString(),
+    userId: user.id
+  })
+});
 
   // Reset
   setName("");
