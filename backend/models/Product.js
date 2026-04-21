@@ -12,9 +12,13 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// ✅ FIX: prevent overwrite error
-const Product =
-  mongoose.models.Product ||
-  mongoose.model("Product", productSchema);
+// 🔥 FINAL SAFE FIX
+let Product;
+
+try {
+  Product = mongoose.model("Product");
+} catch (err) {
+  Product = mongoose.model("Product", productSchema);
+}
 
 export default Product;
