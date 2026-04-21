@@ -1,8 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const Product = require("../models/Product");
+import express from "express";
+import Product from "../models/Product.js";
 
-// Add product
+const router = express.Router();
+
+// ADD PRODUCT
 router.post("/", async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -13,7 +14,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all products
+// GET PRODUCTS
 router.get("/", async (req, res) => {
   const { userId } = req.query;
 
@@ -24,4 +25,4 @@ router.get("/", async (req, res) => {
   res.json(products);
 });
 
-export default router;
+export default router; // ✅ IMPORTANT
