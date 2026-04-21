@@ -50,18 +50,36 @@ export default function AddProductScreen() {
     createdAt: new Date().toISOString(),
   };
 
- const user = await getUser();
+const user = await getUser();
 
-await fetch(`${BASE_URL}/api/products`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    name,
-    category,
-    expiryDate: expiry.toISOString(),
-    userId: user.email
-  })
-});
+try {
+  const res = await fetch(`${BASE_URL}/api/products`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      category,
+      expiryDate: expiry.toISOString(),
+      userId: user.email
+    })
+  });
+
+  const data = await res.json();
+
+  console.log("STATUS:", res.status);
+  console.log("DATA:", data);
+
+  if (!res.ok) {
+    Alert.alert("Error", "Failed to save product");
+    return;
+  }
+
+  Alert.alert("Success", "Product saved to DB ✅");
+
+} catch (err) {
+  console.log("ERROR:", err);
+  Alert.alert("Error", "Network issue ❌");
+}
 
   // Reset
   setName("");
