@@ -6,10 +6,12 @@ const productSchema = new mongoose.Schema({
   expiryDate: Date,
   status: String,
   daysLeft: Number,
+
   userId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User"
-}
+    type: String,   // ✅ correct
+    required: true
+  }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Product", productSchema);
