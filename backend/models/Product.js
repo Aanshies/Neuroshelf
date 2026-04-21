@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
   name: String,
@@ -6,12 +6,12 @@ const productSchema = new mongoose.Schema({
   expiryDate: Date,
   status: String,
   daysLeft: Number,
-
   userId: {
-    type: String,   // ✅ correct
+    type: String,
     required: true
   }
-
 }, { timestamps: true });
 
-module.exports = mongoose.model("Product", productSchema);
+const Product = mongoose.model("Product", productSchema);
+
+export default Product; // ✅ IMPORTANT
