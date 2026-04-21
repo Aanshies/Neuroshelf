@@ -62,9 +62,15 @@ export default function DashboardScreen() {
   );
 
   const total = products.length;
-  const safe = products.filter((p) => getExpiryStatus(p.expiry) === "fresh").length;
-  const expiring = products.filter((p) => getExpiryStatus(p.expiry) === "expiring").length;
-  const expired = products.filter((p) => getExpiryStatus(p.expiry) === "expired").length;
+  const safe = products.filter((p) => getExpiryStatus(p.expiryDate) === "fresh").length;
+
+const expiring = products.filter(
+  (p) => getExpiryStatus(p.expiryDate) === "expiring"
+).length;
+
+const expired = products.filter(
+  (p) => getExpiryStatus(p.expiryDate) === "expired"
+).length;
 
   const hasProducts = products.length > 0;
 
