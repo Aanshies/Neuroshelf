@@ -59,7 +59,7 @@ await fetch(`${BASE_URL}/api/products`, {
     name,
     category,
     expiryDate: expiry.toISOString(),
-    userId: user.id
+    userId: user.email
   })
 });
 
