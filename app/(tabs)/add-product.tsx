@@ -30,7 +30,7 @@ export default function AddProductScreen() {
       date.getMonth() + 1
     ).padStart(2, "0")}/${date.getFullYear()}`;
   };
-
+console.log("SAVE BUTTON CLICKED");
   const handleSave = async () => {
   if (!name || !category || !expiry) {
     Alert.alert("Error", "Please fill all fields");
@@ -51,8 +51,9 @@ export default function AddProductScreen() {
   };
 
 const user = await getUser();
-
+console.log("USER:", user);
 try {
+  console.log("Calling API...");
   const res = await fetch(`${BASE_URL}/api/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
