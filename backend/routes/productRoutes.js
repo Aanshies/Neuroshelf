@@ -5,11 +5,14 @@ const router = express.Router();
 
 // ADD PRODUCT
 router.post("/", async (req, res) => {
+  console.log("BODY RECEIVED:", req.body); // 🔥 ADD THIS
+
   try {
     const product = new Product(req.body);
     await product.save();
     res.json(product);
   } catch (err) {
+    console.log("ERROR:", err); // 🔥 ADD THIS
     res.status(500).json({ error: err.message });
   }
 });
