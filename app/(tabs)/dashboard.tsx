@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { getProducts , deleteProduct } from "../../utils/productStorage";
+import { BASE_URL } from "../../config/api";
 import { getExpiryStatus } from "../../components/ExpiryBadge";
 import { logoutUser,getUser } from "../../utils/storage";
 import ExpiryBadge from "../../components/ExpiryBadge";
@@ -45,7 +45,11 @@ useFocusEffect(
           return;
         }
 
-        const savedProducts = await getProducts();
+        const res = await fetch(`${BASE_URL}/api/products?userId=${user.id}`);
+const data = await res.json();
+
+if (isActive) setProducts(data);
+        
         if (isActive) setProducts(savedProducts || []);
       } catch (err) {
         console.log("Error loading products:", err);
