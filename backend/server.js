@@ -553,12 +553,16 @@ if (!ingredients) {
   }
 });
 
+// ================== TEST ROUTES ==================
+app.get("/", (req, res) => {
+  res.send("NeuroShelf Backend Running 🚀");
+});
+
+app.get("/api/products/test", (req, res) => {
+  res.send("Products API working ✅");
+});
 
 // ================== START SERVER ==================
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
-
