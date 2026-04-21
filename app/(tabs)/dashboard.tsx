@@ -45,7 +45,7 @@ useFocusEffect(
           return;
         }
 
-        const res = await fetch(`${BASE_URL}/api/products?userId=${user.id}`);
+        const res = await fetch(`${BASE_URL}/api/products?userId=${user.email}`);
 const data = await res.json();
 
 if (isActive) setProducts(data);
