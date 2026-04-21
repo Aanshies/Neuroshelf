@@ -15,7 +15,12 @@ router.post("/", async (req, res) => {
 
 // Get all products
 router.get("/", async (req, res) => {
-  const products = await Product.find().sort({ createdAt: -1 });
+  const { userId } = req.query;
+
+  const products = await Product
+    .find({ userId })
+    .sort({ createdAt: -1 });
+
   res.json(products);
 });
 
