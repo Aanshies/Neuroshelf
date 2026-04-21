@@ -21,6 +21,7 @@ if (process.env.GOOGLE_KEY_JSON) {
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
+import productRoutes from "./routes/products.js"; // ✅ ADD THIS
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
