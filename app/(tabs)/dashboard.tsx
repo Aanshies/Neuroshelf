@@ -14,14 +14,12 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { BASE_URL } from "../../config/api";
 import { getExpiryStatus } from "../../components/ExpiryBadge";
-import { logoutUser,getUser } from "../../utils/storage";
+import { logoutUser, getUser } from "../../utils/storage";
 import ExpiryBadge from "../../components/ExpiryBadge";
 
-
 export default function DashboardScreen() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState([]);
 
-    // 🔐 Protect dashboard (redirect if no user)
   useEffect(() => {
     const checkUser = async () => {
       const user = await getUser();
@@ -32,77 +30,55 @@ export default function DashboardScreen() {
     checkUser();
   }, []);
 
-useFocusEffect(
-  useCallback(() => {
-    let isActive = true; // to avoid state updates if screen unmounts
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-    const loadProducts = async () => {
-      try {
-        const user = await getUser(); // ✅ this works because it's inside async function
-        if (!user) {
-          console.log("No user logged in");
-          setProducts([]); // clear products if no user
-          return;
+      const loadProducts = async () => {
+        try {
+          const user = await getUser();
+          if (!user) {
+            setProducts([]);
+            return;
+          }
+
+          const res = await fetch(
+            `${BASE_URL}/api/products?userId=${user.email}`
+          );
+          const data = await res.json();
+
+          if (isActive) setProducts(data);
+        } catch (err) {
+          console.log("Error loading products:", err);
         }
+      };
 
-        const res = await fetch(`${BASE_URL}/api/products?userId=${user.email}`);
-const data = await res.json();
+      loadProducts();
 
-if (isActive) setProducts(data);
-        
-        if (isActive) setProducts(savedProducts || []);
-      } catch (err) {
-        console.log("Error loading products:", err);
-      }
-    };
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
-    loadProducts();
-
-    return () => {
-      isActive = false;
-    };
-  }, [])
-);
   const total = products.length;
   const safe = products.filter((p) => getExpiryStatus(p.expiry) === "fresh").length;
-  const expiring = products.filter(
-    (p) => getExpiryStatus(p.expiry) === "expiring"
-  ).length;
-  const expired = products.filter(
-    (p) => getExpiryStatus(p.expiry) === "expired"
-  ).length;
+  const expiring = products.filter((p) => getExpiryStatus(p.expiry) === "expiring").length;
+  const expired = products.filter((p) => getExpiryStatus(p.expiry) === "expired").length;
 
+  const hasProducts = products.length > 0;
 
-
-const formatDateFromISO = (dateStr: string) => {
-  if (!dateStr) return "No expiry";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "Invalid date";
-  return `${String(d.getDate()).padStart(2, "0")}/${String(
-    d.getMonth() + 1
-  ).padStart(2, "0")}/${d.getFullYear()}`;
-};
-
-const handleDelete = async (id: string) => {
-  Alert.alert(
-    "Delete Product",
-    "Are you sure you want to delete this product?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          const updated = await deleteProduct(id);
-          setProducts(updated);
-        },
-      },
-    ]
-  );
-};
+  const formatDateFromISO = (dateStr) => {
+    if (!dateStr) return "No expiry";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "Invalid date";
+    return `${String(d.getDate()).padStart(2, "0")}/${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}/${d.getFullYear()}`;
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea}>
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -125,73 +101,50 @@ const handleDelete = async (id: string) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* STAT CARDS */}
-        <View style={styles.row}>
-          <StatCard
-            title="Total"
-            value={total}
-            bg="#d1fae5"
-            color="#065f46"
-            icon="cube-outline"
-          />
-          <StatCard
-            title="Expired"
-            value={expired}
-            bg="#fee2e2"
-            color="#dc2626"
-            icon="alert-circle-outline"
-          />
-        </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* ✅ SHOW STATS ONLY IF PRODUCTS EXIST */}
+        {hasProducts && (
+          <>
+            <View style={styles.row}>
+              <StatCard
+                title="Total"
+                value={total}
+                bg="#d1fae5"
+                color="#065f46"
+                icon="cube-outline"
+              />
+              <StatCard
+                title="Expired"
+                value={expired}
+                bg="#fee2e2"
+                color="#dc2626"
+                icon="alert-circle-outline"
+              />
+            </View>
 
-        <View style={styles.row}>
-          <StatCard
-            title="Expiring"
-            value={expiring}
-            bg="#fef3c7"
-            color="#d97706"
-            icon="time-outline"
-          />
-          <StatCard
-            title="Safe"
-            value={safe}
-            bg="#d1fae5"
-            color="#16a34a"
-            icon="shield-checkmark-outline"
-          />
-        </View>
+            <View style={styles.row}>
+              <StatCard
+                title="Expiring"
+                value={expiring}
+                bg="#fef3c7"
+                color="#d97706"
+                icon="time-outline"
+              />
+              <StatCard
+                title="Safe"
+                value={safe}
+                bg="#d1fae5"
+                color="#16a34a"
+                icon="shield-checkmark-outline"
+              />
+            </View>
+          </>
+        )}
 
         {/* PRODUCTS SECTION */}
         <Text style={styles.sectionTitle}>YOUR PRODUCTS</Text>
-         {products.map((item) => (
-  <View key={item.id} style={styles.productCard}>
-    <View style={{ flex: 1 }}>
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productCategory}>{item.category}</Text>
-<Text style={styles.productDate}>
-  Exp: {formatDateFromISO(item.expiry)}
-</Text>
 
-
-    </View>
-
-   <View style={{ alignItems: "center" }}>
-  <ExpiryBadge expiry={item.expiry} />
-
-  <TouchableOpacity
-    onPress={() => handleDelete(item.id)}
-    style={{ marginTop: 8 }}
-  >
-    <Ionicons name="trash-outline" size={20} color="#dc2626" />
-  </TouchableOpacity>
-</View>
-  </View>
-))}
-
-        {products.length === 0 && (
+        {products.length === 0 ? (
           <View style={styles.emptyBox}>
             <MaterialCommunityIcons
               name="package-variant-closed"
@@ -202,14 +155,28 @@ const handleDelete = async (id: string) => {
               No products yet. Add your first one!
             </Text>
           </View>
+        ) : (
+          products.map((item) => (
+            <View key={item._id} style={styles.productCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.productName}>{item.name}</Text>
+                <Text style={styles.productCategory}>{item.category}</Text>
+                <Text style={styles.productDate}>
+                  Exp: {formatDateFromISO(item.expiryDate)}
+                </Text>
+              </View>
+
+              <ExpiryBadge expiry={item.expiryDate} />
+            </View>
+          ))
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------- STAT CARD ---------- */
-const StatCard = ({ title, value, bg, color, icon }: any) => (
+/* STAT CARD */
+const StatCard = ({ title, value, bg, color, icon }) => (
   <View style={[styles.card, { backgroundColor: bg }]}>
     <Ionicons name={icon} size={24} color={color} />
     <Text style={[styles.number, { color }]}>{value}</Text>
@@ -217,133 +184,62 @@ const StatCard = ({ title, value, bg, color, icon }: any) => (
   </View>
 );
 
-/* ---------- STYLES ---------- */
+/* STYLES */
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
+  safeArea: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingVertical: 6,
-    
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.softGray,
+    padding: 15,
   },
-
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  headerLeft: { flexDirection: "row", alignItems: "center" },
   logoCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.white,
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 10,
   },
+  logo: { width: 25, height: 25 },
+  headerTitle: { fontSize: 18, fontWeight: "700" },
 
-  logo: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-  },
-
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.heading,
-  },
-
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 120,
-  },
-
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
+  scrollContent: { padding: 20 },
+  row: { flexDirection: "row", justifyContent: "space-between" },
 
   card: {
     width: "48%",
-    borderRadius: 18,
-    paddingVertical: 28,
+    padding: 20,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.white,
   },
 
-  number: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginTop: 8,
-    color: COLORS.heading,
-  },
+  number: { fontSize: 22, fontWeight: "700" },
+  label: { fontSize: 14 },
 
-  label: {
-    marginTop: 8,
-    fontWeight: "500",
-    fontSize: 16,
-    color: COLORS.subtitle,
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.heading,
-    marginTop: 25,
-    marginBottom: 20,
-  },
+  sectionTitle: { marginTop: 20, fontWeight: "700" },
 
   emptyBox: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    paddingVertical: 50,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.softGray,
+    marginTop: 40,
   },
 
   emptyText: {
-    marginTop: 16,
-    color: COLORS.subtitle,
-    fontSize: 16,
+    marginTop: 10,
+    color: "#64748b",
   },
+
   productCard: {
-  backgroundColor: COLORS.white,
-  padding: 15,
-  borderRadius: 15,
-  marginBottom: 15,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-},
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
 
-productName: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: COLORS.heading,
-},
-
-productCategory: {
-  fontSize: 13,
-  color: COLORS.subtitle,
-  marginTop: 2,
-},
-
-productDate: {
-  fontSize: 12,
-  marginTop: 4,
-  color: COLORS.subtitle,
-},
-
+  productName: { fontWeight: "700" },
+  productCategory: { color: "#64748b" },
+  productDate: { fontSize: 12 },
 });
