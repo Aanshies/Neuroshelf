@@ -110,7 +110,7 @@ const sendForUser = async (user) => {
 // ── Start cron ────────────────────────────────────────────────
 export const startScheduler = () => {
   // "0 0 * * *" = every day at midnight 00:00
-  cron.schedule("* * * * *", async () => {
+  cron.schedule("0 0 * * *", async () => {
     console.log("[Scheduler] 🌙 Midnight — running daily expiry alerts...");
     try {
       const users = await User.find({
@@ -126,4 +126,25 @@ export const startScheduler = () => {
   });
 
   console.log("🕐 Scheduler started — daily alerts fire at midnight (00:00)");
+};
+
+export const runNow = async () => {
+  console.log("[Scheduler] ⚡ Manual trigger...");
+
+  try {
+    const users = await User.find({
+      "notificationPrefs.enabled": true,
+      phone: { $exists: true, $ne: "" },
+    });
+
+    console.log(`[Scheduler] Found ${users.length} user(s)`);
+
+    for (const user of users) {
+      await sendForUser(user);
+    }
+
+    console.log("[Scheduler] ✅ Manual run complete");
+  } catch (err) {
+    console.error("[Scheduler] ❌ Error:", err.message);
+  }
 };

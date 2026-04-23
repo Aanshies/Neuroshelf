@@ -22,6 +22,8 @@ import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { startScheduler } from "./utils/notificationScheduler.js";
 import productRoutes from "./routes/productRoutes.js"; // ✅ ADD THIS
+import { startScheduler, runNow } from "./utils/notificationScheduler.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +62,9 @@ const userSchema = new mongoose.Schema({
 
 // ✅ Safe — won't throw OverwriteModelError
 const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+startScheduler();   // keeps cron running
+runNow();           // 🔥 runs immediately ONCE
 
 // ================== GOOGLE VISION ==================
 const client = new vision.ImageAnnotatorClient();
