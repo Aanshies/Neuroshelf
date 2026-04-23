@@ -30,7 +30,7 @@ export default function AddProductScreen() {
       date.getMonth() + 1
     ).padStart(2, "0")}/${date.getFullYear()}`;
   };
-console.log("SAVE BUTTON CLICKED");
+
   const handleSave = async () => {
   if (!name || !category || !expiry) {
     Alert.alert("Error", "Please fill all fields");
