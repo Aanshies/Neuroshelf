@@ -44,6 +44,8 @@ console.log("FETCH USER:", normalizedEmail);
 const res = await fetch(
   `${BASE_URL}/api/products?userEmail=${normalizedEmail}`
 );
+
+console.log("CALLING URL:", `${BASE_URL}/api/products?userEmail=${normalizedEmail}`);
           const data = await res.json();
 
           console.log("FETCHED PRODUCTS:", data); // 🔥 DEBUG

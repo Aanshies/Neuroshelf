@@ -7,9 +7,10 @@ const productSchema = new mongoose.Schema({
   status: String,
   daysLeft: Number,
   userEmail: {
-    type: String,
-    required: true
-  }
+  type: String,
+  required: true,
+  index: true
+}
 }, { timestamps: true });
 
 // 🔥 FINAL SAFE FIX

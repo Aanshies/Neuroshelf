@@ -6,11 +6,13 @@ const router = express.Router();
 // ADD PRODUCT
 router.post("/", async (req, res) => {
   try {
-    console.log("BODY RECEIVED:", req.body);
-
     const { name, category, expiryDate, userEmail } = req.body;
 
-    if (!userEmail) {
+    const email = userEmail?.trim().toLowerCase();
+
+    console.log("SAVE EMAIL:", email);
+
+    if (!email) {
       return res.status(400).json({ error: "userEmail missing ❌" });
     }
 
@@ -18,7 +20,7 @@ router.post("/", async (req, res) => {
       name,
       category,
       expiryDate,
-      userEmail: userEmail.trim().toLowerCase()
+      userEmail: email
     });
 
     await product.save();
@@ -35,12 +37,21 @@ router.get("/", async (req, res) => {
   try {
     const userEmail = req.query.userEmail?.trim().toLowerCase();
 
-    const products = await Product
-      .find({ userEmail })
-      .sort({ createdAt: -1 });
+    console.log("GET EMAIL:", userEmail);
+
+    if (!userEmail) {
+      return res.json([]);
+    }
+
+    const products = await Product.find({ userEmail }).sort({
+      createdAt: -1,
+    });
+
+    console.log("FOUND PRODUCTS:", products);
 
     res.json(products);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
