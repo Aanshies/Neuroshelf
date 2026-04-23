@@ -110,7 +110,7 @@ const sendForUser = async (user) => {
 // ── Start cron ────────────────────────────────────────────────
 export const startScheduler = () => {
   // "0 0 * * *" = every day at midnight 00:00
-  cron.schedule("0 0 * * *", async () => {
+  cron.schedule("* * * * *", async () => {
     console.log("[Scheduler] 🌙 Midnight — running daily expiry alerts...");
     try {
       const users = await User.find({
