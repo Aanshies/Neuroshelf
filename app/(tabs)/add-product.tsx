@@ -58,7 +58,7 @@ export default function AddProductScreen() {
         name,
         category,
         expiryDate: expiry.toISOString(),
-        userId: normalizedEmail
+        userEmail: normalizedEmail
       })
     });
 

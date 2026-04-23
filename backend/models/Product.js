@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
   expiryDate: Date,
   status: String,
   daysLeft: Number,
-  userId: {
+  userEmail: {
     type: String,
     required: true
   }

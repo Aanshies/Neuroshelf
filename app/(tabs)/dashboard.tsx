@@ -42,7 +42,7 @@ export default function DashboardScreen() {
 console.log("FETCH USER:", normalizedEmail);
 
 const res = await fetch(
-  `${BASE_URL}/api/products?userId=${normalizedEmail}`
+  `${BASE_URL}/api/products?userEmail=${normalizedEmail}`
 );
           const data = await res.json();
 
