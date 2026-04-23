@@ -1,84 +1,102 @@
+const BASE_URL = "https://neuroshelf-1.onrender.com";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUser } from "./storage";
 
-// get storage key for a given email
-const keyForEmail = (email: string) => `USER_PRODUCTS_${email}`;
-
-// get current user's storage key
-const getKey = async () => {
+// Helper to get current user's email
+const getUserEmail = async (): Promise<string | null> => {
   const user = await getUser();
-  if (!user?.email) return null;
-  return keyForEmail(user.email);
+  return user?.email?.trim().toLowerCase() ?? null;
 };
 
 // SAVE product for current user
-export const saveProduct = async (product: any) => {
-  const key = await getKey();
-  if (!key) {
-    console.log("Cannot save product: no user logged in");
-    return;
+export const saveProduct = async (product: {
+  name: string;
+  category: string;
+  expiryDate: string;
+}) => {
+  try {
+    const userEmail = await getUserEmail();
+    if (!userEmail) {
+      console.log("Cannot save product: no user logged in");
+      return null;
+    }
+
+    const response = await fetch(`${BASE_URL}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...product, userEmail }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      console.log("Save failed:", err);
+      return null;
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.log("Error saving product:", err);
+    return null;
   }
-  const existing = await AsyncStorage.getItem(key);
-  const products = existing ? JSON.parse(existing) : [];
-  products.push(product);
-  await AsyncStorage.setItem(key, JSON.stringify(products));
 };
 
 // GET products for current user
 export const getProducts = async () => {
   try {
-    const user = await getUser(); // Ensure user exists
-    if (!user?.email) {
+    const userEmail = await getUserEmail();
+    if (!userEmail) {
       console.log("No user logged in, can't fetch products.");
-      return [];  // No products if no user
+      return [];
     }
 
-    const key = `USER_PRODUCTS_${user.email}`; // Key based on user email
-    const data = await AsyncStorage.getItem(key);
+    const response = await fetch(
+      `${BASE_URL}/products?userEmail=${encodeURIComponent(userEmail)}`
+    );
 
-    if (!data) {
-      console.log("No products found for this user.");
-      return []; // If no products are found, return empty array
+    if (!response.ok) {
+      console.log("Fetch failed:", response.status);
+      return [];
     }
 
-    return JSON.parse(data); // Return the stored products
+    return await response.json();
   } catch (err) {
     console.log("Error getting products:", err);
-    return []; // Return empty if there's an error
+    return [];
   }
 };
-
-// CLEAR products for current user (on logout)
-export const clearProductsForUser = async (email: string) => {
-  try {
-    const key = keyForEmail(email);
-    await AsyncStorage.removeItem(key);
-  } catch (err) {
-    console.log("Error clearing products:", err);
-  }
-};
-
 
 // DELETE single product for current user
 export const deleteProduct = async (id: string) => {
   try {
-    const key = await getKey();
-    if (!key) {
+    const userEmail = await getUserEmail();
+    if (!userEmail) {
       console.log("Cannot delete: no user logged in");
       return [];
     }
 
-    const existing = await AsyncStorage.getItem(key);
-    const products = existing ? JSON.parse(existing) : [];
+    const response = await fetch(`${BASE_URL}/products/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userEmail }),
+    });
 
-    const updatedProducts = products.filter((p: any) => p.id !== id);
+    if (!response.ok) {
+      console.log("Delete failed:", response.status);
+      return [];
+    }
 
-    await AsyncStorage.setItem(key, JSON.stringify(updatedProducts));
-
-    return updatedProducts; // return updated list
+    // Re-fetch the updated list after deletion
+    return await getProducts();
   } catch (err) {
     console.log("Error deleting product:", err);
     return [];
   }
+};
+
+// CLEAR products for current user (on logout)
+// No-op on frontend now — data lives in DB, nothing local to clear
+export const clearProductsForUser = async (_email: string) => {
+  // Previously cleared AsyncStorage; now data is in MongoDB.
+  // If you want a "wipe all products" feature, add a DELETE /products?userEmail= route.
+  console.log("clearProductsForUser: data is now in DB, nothing to clear locally.");
 };
