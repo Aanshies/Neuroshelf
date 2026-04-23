@@ -31,6 +31,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+
 // GET PRODUCTS
 router.get("/", async (req, res) => {
   const { userId } = req.query;

@@ -1,18 +1,28 @@
 import { Text, StyleSheet } from "react-native";
 import { mockNotify } from "../utils/notifications";
 
-export function getExpiryStatus(expiry: string) {
+// ================== STATUS FUNCTION ==================
+export function getExpiryStatus(expiry) {
+  if (!expiry) return "fresh";
+
   const today = new Date();
   const expiryDate = new Date(expiry);
-  const diff =
-    (expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
 
-  if (diff < 0) return "expired";
-  if (diff <= 7) return "expiring";
+  // 🔥 Remove time (VERY IMPORTANT)
+  today.setHours(0, 0, 0, 0);
+  expiryDate.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil(
+    (expiryDate - today) / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays < 0) return "expired";
+  if (diffDays <= 3) return "expiring";
   return "fresh";
 }
 
-export default function ExpiryBadge({ expiry }: { expiry: string }) {
+// ================== BADGE COMPONENT ==================
+export default function ExpiryBadge({ expiry }) {
   const status = getExpiryStatus(expiry);
 
   const label =
@@ -29,23 +39,27 @@ export default function ExpiryBadge({ expiry }: { expiry: string }) {
   );
 }
 
-export function notifyIfExpiring(
-  name: string,
-  expiry: string
-) {
+// ================== NOTIFICATION FUNCTION ==================
+export function notifyIfExpiring(name, expiry) {
   const today = new Date();
   const expiryDate = new Date(expiry);
-  const diff =
-    (expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
 
-  if (diff <= 2 && diff >= 0) {
+  // 🔥 Remove time
+  today.setHours(0, 0, 0, 0);
+  expiryDate.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil(
+    (expiryDate - today) / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays <= 2 && diffDays >= 0) {
     mockNotify(
       "Product Expiring Soon",
-      `${name} expires in ${Math.ceil(diff)} day(s)`
+      `${name} expires in ${diffDays} day(s)`
     );
   }
 
-  if (diff < 0) {
+  if (diffDays < 0) {
     mockNotify(
       "Product Expired",
       `${name} has expired`
@@ -53,6 +67,7 @@ export function notifyIfExpiring(
   }
 }
 
+// ================== STYLES ==================
 const styles = StyleSheet.create({
   badge: {
     paddingVertical: 4,

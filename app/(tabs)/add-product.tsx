@@ -37,58 +37,55 @@ console.log("SAVE BUTTON CLICKED");
     return;
   }
 
-  // Save expiry as ISO string (YYYY-MM-DD)
-  const formattedExpiry = expiry.toISOString().split("T")[0];
+  const user = await getUser();
+  console.log("USER:", user);
 
-  notifyIfExpiring(name, formattedExpiry);
-
-  const newProduct = {
-    id: Date.now().toString(),
-    name,
-    category,
-    expiry: formattedExpiry,
-    createdAt: new Date().toISOString(),
-  };
-
-const user = await getUser();
-console.log("USER:", user);
-try {
-  console.log("Calling API...");
-  const res = await fetch(`${BASE_URL}/api/products`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      category,
-      expiryDate: expiry.toISOString(),
-      userId: user.email
-    })
-  });
-
-  const data = await res.json();
-
-  console.log("STATUS:", res.status);
-  console.log("DATA:", data);
-
-  if (!res.ok) {
-    Alert.alert("Error", "Failed to save product");
+  // 🔥 CRITICAL FIX
+  if (!user || !user.email) {
+    Alert.alert("Error", "User not found ❌");
     return;
   }
 
-  Alert.alert("Success", "Product saved to DB ✅");
+  const normalizedEmail = user.email.trim().toLowerCase();
 
-} catch (err) {
-  console.log("ERROR:", err);
-  Alert.alert("Error", "Network issue ❌");
-}
+  try {
+    console.log("Calling API...");
 
-  // Reset
+    const res = await fetch(`${BASE_URL}/api/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        category,
+        expiryDate: expiry.toISOString(),
+        userId: normalizedEmail
+      })
+    });
+
+    const data = await res.json();
+
+    console.log("STATUS:", res.status);
+    console.log("DATA:", data);
+
+    if (!res.ok) {
+      Alert.alert("Error", "Failed to save product");
+      return;
+    }
+
+    Alert.alert("Success", "Saved ✅");
+
+  } catch (err) {
+    console.log("ERROR:", err);
+    Alert.alert("Network error ❌");
+  }
+
   setName("");
   setCategory("General");
   setExpiry(null);
 
   router.back();
 };
+
 
   return (
     <ScrollView
