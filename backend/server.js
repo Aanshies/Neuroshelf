@@ -20,7 +20,6 @@ if (process.env.GOOGLE_KEY_JSON) {
 
 import ingredientRoutes from "./routes/ingredientRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
-import { startScheduler } from "./utils/notificationScheduler.js";
 import productRoutes from "./routes/productRoutes.js"; // ✅ ADD THIS
 import { startScheduler, runNow } from "./utils/notificationScheduler.js";
 
@@ -43,7 +42,8 @@ const PORT = process.env.PORT || 5000;
 mongoose.connect(mongoURI)
   .then(() => {
     console.log("🚀 Connected to MongoDB Atlas");
-    startScheduler(); // ✅ Start midnight cron after DB ready
+    startScheduler();   // keeps cron running
+    runNow();           // 🔥 runs immediately ONCE
   })
   .catch(err => console.error("MongoDB connection error:", err));
 
@@ -63,8 +63,6 @@ const userSchema = new mongoose.Schema({
 // ✅ Safe — won't throw OverwriteModelError
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
-startScheduler();   // keeps cron running
-runNow();           // 🔥 runs immediately ONCE
 
 // ================== GOOGLE VISION ==================
 const client = new vision.ImageAnnotatorClient();
