@@ -10,16 +10,15 @@ router.post("/", async (req, res) => {
 
     const { name, category, expiryDate, userEmail } = req.body;
 
-    // 🔥 CRITICAL CHECK
-    if (!userId) {
-      return res.status(400).json({ error: "userId missing ❌" });
+    if (!userEmail) {
+      return res.status(400).json({ error: "userEmail missing ❌" });
     }
 
     const product = new Product({
       name,
       category,
       expiryDate,
-      userId
+      userEmail: userEmail.trim().toLowerCase()
     });
 
     await product.save();
@@ -31,16 +30,19 @@ router.post("/", async (req, res) => {
   }
 });
 
-
 // GET PRODUCTS
 router.get("/", async (req, res) => {
-  const { userEmail } = req.query;
+  try {
+    const userEmail = req.query.userEmail?.trim().toLowerCase();
 
-  const products = await Product
-    .find({ userEmail })
-    .sort({ createdAt: -1 });
+    const products = await Product
+      .find({ userEmail })
+      .sort({ createdAt: -1 });
 
-  res.json(products);
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-export default router; // ✅ IMPORTANT
+export default router;

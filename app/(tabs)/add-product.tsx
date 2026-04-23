@@ -55,11 +55,11 @@ export default function AddProductScreen() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name,
-        category,
-        expiryDate: expiry.toISOString(),
-        userEmail: normalizedEmail
-      })
+  name,
+  category,
+  expiryDate: expiry.toISOString(),
+  userEmail: user.email.trim().toLowerCase()
+})
     });
 
     const data = await res.json();
