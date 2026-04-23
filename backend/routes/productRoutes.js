@@ -5,14 +5,28 @@ const router = express.Router();
 
 // ADD PRODUCT
 router.post("/", async (req, res) => {
-  console.log("BODY RECEIVED:", req.body); // 🔥 ADD THIS
-
   try {
-    const product = new Product(req.body);
+    console.log("BODY RECEIVED:", req.body);
+
+    const { name, category, expiryDate, userId } = req.body;
+
+    // 🔥 CRITICAL CHECK
+    if (!userId) {
+      return res.status(400).json({ error: "userId missing ❌" });
+    }
+
+    const product = new Product({
+      name,
+      category,
+      expiryDate,
+      userId
+    });
+
     await product.save();
+
     res.json(product);
   } catch (err) {
-    console.log("ERROR:", err); // 🔥 ADD THIS
+    console.log("ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
